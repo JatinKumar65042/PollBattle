@@ -14,11 +14,10 @@ A real-time polling web application where users can create or join a room, vote 
    npm install
 Start the WebSocket server:
 
-    ```bash
+```bash
     node index.js
-    Make sure port 3001 is available, or you can change it in the code.
-    ```
-    
+```
+Make sure port 3001 is available, or you can change it in the code.
 
 ### Frontend
 Navigate to the frontend project directory.
@@ -31,9 +30,9 @@ Install dependencies:
 
 Start the frontend using Vite:
 
-    ```bash 
+```bash 
     npm run dev
-    ```
+```
     
 Visit http://localhost:5173 in your browser to use the app.
 
