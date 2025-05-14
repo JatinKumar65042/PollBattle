@@ -20,7 +20,7 @@ A real-time poll application where users can create or join a poll room and vote
 
 ```bash
     git clone https://github.com/your-username/live-poll-battle.git
-    cd live-poll-battle
+    cd PollBattle
 ```
 
 ### Start the Backend
