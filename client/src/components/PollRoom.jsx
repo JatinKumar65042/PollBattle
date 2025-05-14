@@ -1,13 +1,38 @@
 import { useEffect, useState } from 'react';
 import { getSocket } from '../utils/socket';
 
-function PollRoom({ username, roomCode, question, votes: initialVotes }) {
+function PollRoom({ username, roomCode, question, votes: initialVotes, optionA, optionB, createdAt }) {
   const [votes, setVotes] = useState(initialVotes);
   const [voted, setVoted] = useState(localStorage.getItem(roomCode));
   const [ended, setEnded] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
 
   const socket = getSocket();
+
+  useEffect(() => {
+    const now = Date.now();
+    const secondsPassed = Math.floor((now - createdAt) / 1000);
+    const remaining = Math.max(0, 60 - secondsPassed);
+    setTimeLeft(remaining);
+
+    if (remaining === 0) {
+      setEnded(true);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setEnded(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [createdAt]);
 
   useEffect(() => {
     socket.onmessage = (msg) => {
@@ -18,18 +43,6 @@ function PollRoom({ username, roomCode, question, votes: initialVotes }) {
         setEnded(true);
       }
     };
-
-    const timer = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
   }, []);
 
   const handleVote = (choice) => {
@@ -58,7 +71,7 @@ function PollRoom({ username, roomCode, question, votes: initialVotes }) {
             disabled={voted || ended}
             onClick={() => handleVote('A')}
           >
-            🐱 Cats
+            {optionA}
           </button>
 
           <button
@@ -67,18 +80,18 @@ function PollRoom({ username, roomCode, question, votes: initialVotes }) {
             disabled={voted || ended}
             onClick={() => handleVote('B')}
           >
-            🐶 Dogs
+            {optionB}
           </button>
         </div>
 
         <div className="text-lg text-gray-700 space-y-1 mb-4">
-          <p>🐱 Votes for Cats: <span className="font-bold text-pink-600">{votes.A}</span></p>
-          <p>🐶 Votes for Dogs: <span className="font-bold text-blue-600">{votes.B}</span></p>
+          <p>{optionA}: <span className="font-bold text-pink-600">{votes.A}</span></p>
+          <p>{optionB}: <span className="font-bold text-blue-600">{votes.B}</span></p>
         </div>
 
         {voted && (
           <p className="text-green-600 font-semibold mb-2">
-            You voted for: {voted === 'A' ? '🐱 Cats' : '🐶 Dogs'}
+            You voted for: {voted === 'A' ? optionA : optionB}
           </p>
         )}
         {ended && (

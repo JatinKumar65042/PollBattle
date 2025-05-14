@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 const wss = new WebSocketServer({ port: 3001 });
 console.log("WebSocket server started on ws://localhost:3001");
 
-const rooms = {}; // roomCode -> { question, votes, users, hasEnded, createdAt }
+const rooms = {};
 
 wss.on('connection', (ws) => {
   ws.on('message', (message) => {
@@ -13,17 +13,26 @@ wss.on('connection', (ws) => {
 
     if (type === 'create_room') {
       const roomCode = generateRoomCode();
+      const optionA = payload.optionA;
+      const optionB = payload.optionB;
+      const question = `${optionA} vs ${optionB}`;
+      const createdAt = Date.now();
+
       rooms[roomCode] = {
-        question: "Cats vs Dogs",
+        question,
+        optionA,
+        optionB,
         votes: { A: 0, B: 0 },
         users: {},
         hasEnded: false,
-        createdAt: Date.now()
+        createdAt
       };
 
-      ws.send(JSON.stringify({ type: 'room_created', payload: { roomCode, question: "Cats vs Dogs" } }));
+      ws.send(JSON.stringify({
+        type: 'room_created',
+        payload: { roomCode, question, optionA, optionB, createdAt }
+      }));
 
-      // End voting after 60s
       setTimeout(() => {
         rooms[roomCode].hasEnded = true;
         broadcastToRoom(roomCode, { type: 'poll_ended' });
@@ -45,10 +54,12 @@ wss.on('connection', (ws) => {
         payload: {
           roomCode,
           question: room.question,
-          votes: room.votes
+          votes: room.votes,
+          optionA: room.optionA,
+          optionB: room.optionB,
+          createdAt: room.createdAt
         }
       }));
-
     } else if (type === 'vote') {
       const { roomCode, username, vote } = payload;
       const room = rooms[roomCode];
